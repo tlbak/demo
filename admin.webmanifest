@@ -1,0 +1,24 @@
+{
+  "name": "لوحة اسم المشروع",
+  "short_name": "اسم المشروع",
+  "start_url": "./admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "ar",
+  "background_color": "#F1F5F4",
+  "theme_color": "#132A26",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
