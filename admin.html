@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>لوحة التحكم</title>
+<meta name="theme-color" content="#132A26">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="app.css">
+<style>
+  .login { min-height: 80vh; justify-content: center; }
+  .login .card { gap: 16px; }
+  .pin { font-size: 24px !important; letter-spacing: .4em; text-align: center; direction: ltr; }
+  .top { display: flex; align-items: center; gap: 12px; }
+  .top .mark { width: 42px; height: 42px; font-size: 20px; border-radius: 12px; }
+  .top-title { flex: 1; min-width: 0; }
+  .top-title h1 { font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .banner { background: var(--new-bg); color: var(--new); border-radius: 12px; padding: 10px 14px; font-weight: 600; }
+  .orders { display: flex; flex-direction: column; gap: 10px; }
+  .order { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .order.is-new { border-color: var(--new); box-shadow: inset 4px 0 0 var(--new); }
+  .o-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .o-top strong { font-family: var(--font-display); font-size: 17px; }
+  .o-items { display: flex; flex-direction: column; gap: 2px; font-size: 15px; }
+  .o-items div { display: flex; justify-content: space-between; gap: 8px; }
+  .o-total { display: flex; justify-content: space-between; font-weight: 700; border-top: 1px dashed var(--line); padding-top: 6px; }
+  .o-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 14px; color: var(--muted); }
+  .o-note { font-size: 14px; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; white-space: pre-wrap; }
+  .o-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .drv { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+  .drv select { flex: 1; min-height: 44px; font-size: 15px; padding: 8px 10px; }
+  .empty { text-align: center; padding: 28px 16px; color: var(--muted); }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .tile span { font-size: 13px; color: var(--muted); }
+  .tile strong { font-family: var(--font-display); font-size: 21px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .hbars { display: flex; flex-direction: column; gap: 12px; }
+  .hbar-top { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; }
+  .hbar-top b { font-variant-numeric: tabular-nums; }
+  .track { height: 10px; background: var(--surface-2); border-radius: 6px; overflow: hidden; margin-top: 4px; }
+  .fill { height: 100%; background: var(--accent); border-radius: 6px; }
+  .vbars { display: flex; align-items: flex-end; gap: 4px; height: 140px; padding-top: 8px; }
+  .vbar { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .vbar i { display: block; width: 100%; max-width: 28px; background: var(--accent); border-radius: 6px 6px 2px 2px; min-height: 2px; }
+  .vbar i.zero { background: var(--line); }
+  .vbar small { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  pre.report { margin: 0; white-space: pre-wrap; font-family: var(--font-body); font-size: 15px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .item { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--bg); }
+  .item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .item-body b { font-weight: 600; }
+  .item.off .item-body { opacity: .55; }
+  .editor { border: 1px solid var(--accent); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; background: var(--surface); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; cursor: pointer; }
+  .switch input { appearance: none; -webkit-appearance: none; width: 52px; height: 30px; border-radius: 999px; background: var(--line); position: relative; cursor: pointer; flex: none; margin: 0; transition: background .15s; }
+  .switch input::after { content: ""; position: absolute; top: 3px; right: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+  .switch input:checked { background: var(--done); }
+  .switch input:checked::after { transform: translateX(-22px); }
+  .linkbox { display: flex; gap: 8px; align-items: stretch; }
+  .linkbox input { flex: 1; min-width: 0; font-size: 14px; }
+  .tag { display: inline-flex; align-items: center; gap: 4px; background: var(--surface-2); border-radius: 999px; padding: 2px 4px 2px 12px; font-size: 14px; }
+  .tag button { width: 32px; height: 32px; border: 0; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; border-radius: 50%; }
+  @media (max-width: 420px) {
+    .tile strong { font-size: 18px; }
+    .two { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<main class="wrap login" id="login" hidden>
+  <form class="card" id="loginForm" novalidate>
+    <div class="row"><div class="mark" aria-hidden="true">◆</div><div><h1>لوحة التحكم</h1><p class="muted">ادخل الرقم السري</p></div></div>
+    <div class="field">
+      <label for="pin">الرقم السري</label>
+      <input type="password" id="pin" class="pin" inputmode="numeric" autocomplete="current-password" maxlength="8">
+    </div>
+    <p class="err" id="loginErr" role="alert"></p>
+    <button class="btn block" id="loginBtn" type="submit">دخول</button>
+  </form>
+</main>
+
+<main class="wrap" id="app" hidden>
+  <header class="top">
+    <div class="mark" id="mark" aria-hidden="true"></div>
+    <div class="top-title"><h1 id="bizName"></h1><p class="muted">لوحة التحكم</p></div>
+    <button class="icon-btn" id="refresh" type="button" aria-label="تحديث">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+    </button>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="أقسام اللوحة">
+    <button role="tab" id="t-orders" data-tab="orders" aria-selected="true" aria-controls="p-orders">الطلبات <span class="badge" id="badge" hidden></span></button>
+    <button role="tab" id="t-report" data-tab="report" aria-selected="false" aria-controls="p-report">التقرير</button>
+    <button role="tab" id="t-settings" data-tab="settings" aria-selected="false" aria-controls="p-settings">الإعدادات</button>
+  </nav>
+
+  <!-- Orders -->
+  <section class="stack" id="p-orders" role="tabpanel" aria-labelledby="t-orders">
+    <div class="banner" id="banner" hidden></div>
+    <div class="chips" id="chips"></div>
+    <div class="orders" id="orders"><div class="sk" style="height:150px"></div><div class="sk" style="height:150px"></div></div>
+  </section>
+
+  <!-- Report -->
+  <section class="stack" id="p-report" role="tabpanel" aria-labelledby="t-report" hidden>
+    <div class="chips" id="ranges">
+      <button type="button" class="chip" data-range="7" aria-pressed="true">آخر 7 أيام</button>
+      <button type="button" class="chip" data-range="30" aria-pressed="false">آخر 30 يوم</button>
+      <button type="button" class="chip" data-range="month" aria-pressed="false">هذا الشهر</button>
+    </div>
+    <div id="reportBody" class="stack"><div class="sk" style="height:80px"></div><div class="sk" style="height:180px"></div></div>
+  </section>
+
+  <!-- Settings -->
+  <section class="stack" id="p-settings" role="tabpanel" aria-labelledby="t-settings" hidden>
+    <div class="card">
+      <h3>رابط الطلب لعملائك</h3>
+      <p class="muted">حطه في البايو وفي حالة الواتساب.</p>
+      <div class="linkbox"><input type="text" id="custLink" class="ltr" readonly aria-label="رابط الطلب"><button class="btn ghost sm" id="copyLink" type="button">نسخ</button></div>
+    </div>
+
+    <div class="card">
+      <label class="switch" for="accepting"><span><b>استقبال الطلبات</b><br><span class="muted" id="acceptingHint"></span></span><input type="checkbox" id="accepting"></label>
+      <div class="field" id="closedField">
+        <label for="closedMsg">الرسالة اللي تظهر للعملاء وقت الإيقاف</label>
+        <input type="text" id="closedMsg" maxlength="160">
+      </div>
+      <button class="btn sm" id="saveAccepting" type="button">حفظ</button>
+    </div>
+
+    <div class="card">
+      <h3>معلومات المشروع</h3>
+      <div class="field"><label for="sName">اسم المشروع</label><input type="text" id="sName" maxlength="60"></div>
+      <div class="field"><label for="sTagline">العبارة تحت الاسم</label><input type="text" id="sTagline" maxlength="80" placeholder="مثال: حلا بيت بمكونات طازجة"></div>
+      <div class="field"><label for="sMark">حرف الشعار</label><input type="text" id="sMark" maxlength="2" style="max-width:96px"></div>
+      <button class="btn sm" id="saveInfo" type="button">حفظ</button>
+    </div>
+
+    <div class="card">
+      <h3>مواعيد التسليم</h3>
+      <div class="chips" id="slotTags"></div>
+      <div class="linkbox"><input type="text" id="newSlot" maxlength="40" placeholder="مثال: الخميس مساءً" aria-label="موعد جديد"><button class="btn ghost sm" id="addSlot" type="button">إضافة</button></div>
+      <button class="btn sm" id="saveSlots" type="button">حفظ المواعيد</button>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h3>الأصناف</h3><button class="btn ghost sm" id="addProduct" type="button">إضافة صنف</button></div>
+      <div class="list" id="productList"></div>
+    </div>
+
+    <div class="card">
+      <div class="row between"><h3>المناديب</h3><button class="btn ghost sm" id="addDriver" type="button">إضافة مندوب</button></div>
+      <div class="list" id="driverList"></div>
+    </div>
+
+    <div class="card">
+      <h3>التنبيهات</h3>
+      <p class="muted">يوصلك تنبيه مع كل طلب جديد، وتقرير الأسبوع كل جمعة.</p>
+      <div class="field"><label for="sEmail">الإيميل</label><input type="email" id="sEmail" class="ltr" maxlength="120" placeholder="name@example.com"></div>
+      <div class="field"><label for="sTelegram">رقم محادثة تيليجرام (اختياري)</label><input type="text" id="sTelegram" class="ltr" inputmode="numeric" maxlength="30"><p class="hint" id="tgHint"></p></div>
+      <button class="btn sm" id="saveAlerts" type="button">حفظ</button>
+    </div>
+
+    <form class="card" id="pinForm" novalidate>
+      <h3>تغيير الرقم السري</h3>
+      <div class="field"><label for="oldPin">الرقم الحالي</label><input type="password" id="oldPin" class="ltr" inputmode="numeric" maxlength="8" autocomplete="current-password"></div>
+      <div class="two">
+        <div class="field"><label for="newPin">الرقم الجديد</label><input type="password" id="newPin" class="ltr" inputmode="numeric" maxlength="8" autocomplete="new-password"></div>
+        <div class="field"><label for="newPin2">أعد كتابته</label><input type="password" id="newPin2" class="ltr" inputmode="numeric" maxlength="8" autocomplete="new-password"></div>
+      </div>
+      <p class="err" id="pinErr" role="alert"></p>
+      <button class="btn sm" id="savePin" type="submit">تغيير</button>
+    </form>
+
+    <button class="btn ghost" id="logout" type="button">تسجيل خروج</button>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span></span></div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var esc = U.esc;
+
+  var STATUS = { 'new': 'جديد', prep: 'قيد التجهيز', out: 'في الطريق', done: 'تم التوصيل', cancelled: 'ملغي' };
+  var NEXT = { 'new': 'prep', prep: 'out', out: 'done' };
+  var NEXT_LABEL = { 'new': 'ابدأ التجهيز', prep: 'طلع مع المندوب', out: 'تم التوصيل' };
+  var POLL_MS = 60000;
+
+  var state = {
+    token: U.store.get('tok', sessionStorage),
+    orders: [],
+    cfg: null,           // { settings, products, drivers, telegram_ready }
+    filter: 'active',
+    tab: 'orders',
+    range: '7',
+    maxSeenId: 0,
+    confirmCancel: null,
+    confirmDelete: null,
+    editProduct: null,   // product id, 'new' or null
+    editDriver: null,
+    slots: [],
+    lastReportText: '',
+  };
+
+  /* ---------------- API with session handling ---------------- */
+  function authed(action, body) {
+    return API.post(action, Object.assign({ token: state.token }, body || {})).catch(function (err) {
+      if (err.code === 'auth') showLogin(err.message);
+      throw err;
+    });
+  }
+
+  /* ---------------- Login ---------------- */
+  function showLogin(msg) {
+    state.token = null;
+    U.store.del('tok', sessionStorage);
+    $('#app').hidden = true;
+    $('#login').hidden = false;
+    $('#loginErr').textContent = msg || '';
+    $('#pin').value = '';
+    setTimeout(function () { $('#pin').focus(); }, 50);
+  }
+
+  $('#loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var pin = U.latinDigits($('#pin').value).replace(/\D/g, '');
+    if (pin.length < 4) { $('#loginErr').textContent = 'اكتب الرقم السري'; return; }
+    var btn = $('#loginBtn');
+    U.busy(btn, true);
+    API.post('login', { pin: pin, device: U.store.get('dev') || '' }).then(function (res) {
+      state.token = res.token;
+      U.store.set('tok', res.token, sessionStorage);
+      // Long-lived device key: keeps this phone usable if strangers lock the login page.
+      if (res.device) U.store.set('dev', res.device);
+      $('#loginErr').textContent = '';
+      start();
+    }).catch(function (err) {
+      $('#loginErr').textContent = err.message;
+      $('#pin').select();
+    }).then(function () { U.busy(btn, false); });
+  });
+
+  function start() {
+    $('#login').hidden = true;
+    $('#app').hidden = false;
+    Promise.all([loadSettings(), loadOrders(false)]).catch(function (err) {
+      if (err.code !== 'auth') U.toast(err.message);
+    });
+  }
+
+  /* ---------------- Tabs ---------------- */
+  function switchTab(name) {
+    state.tab = name;
+    $$('[role=tab]').forEach(function (t) { t.setAttribute('aria-selected', String(t.getAttribute('data-tab') === name)); });
+    ['orders', 'report', 'settings'].forEach(function (k) { $('#p-' + k).hidden = k !== name; });
+    if (name === 'report') loadReport();
+    if (name === 'orders') loadOrders(true);
+    window.scrollTo(0, 0);
+  }
+  $$('[role=tab]').forEach(function (t) { t.addEventListener('click', function () { switchTab(t.getAttribute('data-tab')); }); });
+  $('#refresh').addEventListener('click', function () {
+    var b = $('#refresh');
+    b.disabled = true;
+    var job = state.tab === 'report' ? loadReport() : state.tab === 'settings' ? loadSettings() : loadOrders(false);
+    Promise.resolve(job).then(function () { U.toast('تم التحديث'); }, function () {}).then(function () { b.disabled = false; });
+  });
+
+  /* ---------------- Orders ---------------- */
+  function loadOrders(quiet) {
+    return authed('orders', { days: 30 }).then(function (res) {
+      var newest = res.orders.reduce(function (m, o) { return Math.max(m, o.id); }, 0);
+      if (quiet && state.maxSeenId && newest > state.maxSeenId) {
+        var fresh = res.orders.filter(function (o) { return o.id > state.maxSeenId && o.status === 'new'; }).length;
+        if (fresh) {
+          U.toast(fresh === 1 ? 'وصلك طلب جديد' : 'وصلتك ' + fresh + ' طلبات جديدة');
+          try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch (e) { /* not supported */ }
+        }
+      }
+      state.maxSeenId = Math.max(state.maxSeenId, newest);
+      state.orders = res.orders;
+      renderOrders();
+    }).catch(function (err) {
+      if (!quiet && err.code !== 'auth') {
+        $('#orders').innerHTML = '<div class="card empty"><p>' + esc(err.message) + '</p></div>';
+      }
+      throw err;
+    });
+  }
+
+  function counts() {
+    var c = { active: 0, 'new': 0, prep: 0, out: 0, done: 0, cancelled: 0 };
+    state.orders.forEach(function (o) {
+      c[o.status] = (c[o.status] || 0) + 1;
+      if (o.status === 'new' || o.status === 'prep' || o.status === 'out') c.active++;
+    });
+    return c;
+  }
+
+  function renderOrders() {
+    var c = counts();
+    var defs = [['active', 'الحالية'], ['new', 'جديد'], ['prep', 'قيد التجهيز'], ['out', 'في الطريق'], ['done', 'تم التوصيل'], ['cancelled', 'ملغي']];
+    $('#chips').innerHTML = defs.filter(function (d) { return d[0] === 'active' || c[d[0]] || state.filter === d[0]; }).map(function (d) {
+      return '<button type="button" class="chip" data-f="' + d[0] + '" aria-pressed="' + (state.filter === d[0]) + '">' + d[1] + ' (' + c[d[0]] + ')</button>';
+    }).join('');
+    $('#banner').hidden = !c['new'];
+    $('#banner').textContent = c['new'] === 1 ? 'عندك طلب جديد ينتظر' : 'عندك ' + c['new'] + ' طلبات جديدة تنتظر';
+    $('#badge').hidden = !c['new'];
+    $('#badge').textContent = c['new'];
+    document.title = (c['new'] ? '(' + c['new'] + ') ' : '') + 'لوحة التحكم';
+
+    var list = state.orders.filter(function (o) {
+      if (state.filter === 'active') return o.status === 'new' || o.status === 'prep' || o.status === 'out';
+      return o.status === state.filter;
+    });
+    if (state.filter === 'active') list.sort(function (a, b) { return a.id - b.id; }); // oldest first: work the queue
+    if (!list.length) {
+      $('#orders').innerHTML = '<div class="card empty"><p>' + (state.filter === 'active' ? 'ما فيه طلبات حالية. أول ما يوصل طلب بيظهر هنا.' : 'ما فيه طلبات في هذا القسم.') + '</p></div>';
+      return;
+    }
+    $('#orders').innerHTML = list.map(orderCard).join('');
+  }
+
+  function cur() { return (state.cfg && state.cfg.settings.currency_label) || 'ر.س'; }
+  function bizName() { return (state.cfg && state.cfg.settings.business_name) || ''; }
+  function driverById(id) { return ((state.cfg && state.cfg.drivers) || []).filter(function (d) { return d.id === id; })[0]; }
+  function itemsText(o) { return o.items.map(function (it) { return it.name + ' × ' + it.qty; }).join('، '); }
+  function deliveryText(o) { return o.delivery_text || o.delivery_day || ''; }
+
+  function custMsg(o) {
+    var b = bizName();
+    return {
+      'new': 'هلا ' + o.customer_name + '، معك ' + b + '. وصلنا طلبك رقم #' + o.id + ' (' + itemsText(o) + ')، والمجموع ' + U.money(o.total) + ' ' + cur() + '.' + (deliveryText(o) ? ' نأكد لك التسليم ' + (o.delivery_date ? 'يوم ' : '') + deliveryText(o) + '.' : ''),
+      prep: 'هلا ' + o.customer_name + '، طلبك رقم #' + o.id + ' من ' + b + ' قيد التجهيز الحين.',
+      out: 'هلا ' + o.customer_name + '، طلبك رقم #' + o.id + ' طلع مع المندوب وبيوصلك قريب.',
+      done: 'شكراً ' + o.customer_name + ' على طلبك من ' + b + '، نتمنى إنه عجبك.',
+      cancelled: 'هلا ' + o.customer_name + '، بخصوص طلبك رقم #' + o.id + ' من ' + b + ':',
+    }[o.status];
+  }
+  function driverMsg(o) {
+    return 'طلب #' + o.id + ' · ' + bizName() +
+      '\nالعميل: ' + o.customer_name + '\nالجوال: ' + o.phone + '\nالحي: ' + o.district +
+      (deliveryText(o) ? '\nالتسليم: ' + deliveryText(o) : '') +
+      (o.location_url ? '\nالموقع: ' + o.location_url : '') +
+      '\nالطلب: ' + itemsText(o) + '\nالمبلغ: ' + U.money(o.total) + ' ' + cur() +
+      (o.notes ? '\nملاحظات: ' + o.notes : '');
+  }
+
+  function ago(iso) {
+    if (!iso) return '';
+    var d = new Date(iso), mins = Math.round((Date.now() - d.getTime()) / 60000);
+    if (mins < 1) return 'الحين';
+    if (mins < 60) return 'قبل ' + mins + ' د';
+    var h = Math.round(mins / 60);
+    if (h < 24) return 'قبل ' + h + ' س';
+    var days = Math.round(h / 24);
+    if (days === 1) return 'أمس';
+    if (days < 7) return 'قبل ' + days + ' أيام';
+    return d.toLocaleDateString('ar-SA-u-nu-latn', { day: 'numeric', month: 'short' });
+  }
+
+  function orderCard(o) {
+    var drivers = (state.cfg && state.cfg.drivers) || [];
+    var d = driverById(o.driver_id);
+    var showDriver = (o.status === 'prep' || o.status === 'out') && drivers.length;
+    var canCancel = o.status === 'new' || o.status === 'prep';
+    return '<article class="order' + (o.status === 'new' ? ' is-new' : '') + '">' +
+      '<div class="o-top"><strong class="num">#' + o.id + ' · ' + esc(o.customer_name) + '</strong><span class="pill s-' + o.status + '">' + STATUS[o.status] + '</span></div>' +
+      '<div class="o-items">' + o.items.map(function (it) {
+        return '<div><span>' + esc(it.name) + ' × ' + it.qty + '</span><span class="num">' + U.money(it.price * it.qty) + '</span></div>';
+      }).join('') + '</div>' +
+      '<div class="o-total"><span>المجموع</span><span class="num">' + U.money(o.total) + ' ' + esc(cur()) + '</span></div>' +
+      '<div class="o-meta"><span>التسليم: ' + esc(deliveryText(o) || '-') + '</span><span>الحي: ' + esc(o.district) + '</span>' +
+        '<bdi dir="ltr" class="num">' + esc(o.phone) + '</bdi><span>' + esc(ago(o.created_at)) + '</span>' +
+        (U.safeUrl(o.location_url) ? '<a href="' + esc(o.location_url) + '" target="_blank" rel="noopener">الموقع على الخريطة</a>' : '') + '</div>' +
+      (o.notes ? '<p class="o-note">' + esc(o.notes) + '</p>' : '') +
+      (showDriver ? '<label class="drv">المندوب <select data-drv="' + o.id + '"><option value="">اختر مندوب</option>' +
+        drivers.map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === o.driver_id ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') +
+        '</select></label>' : '') +
+      '<div class="o-actions">' +
+        (NEXT[o.status] ? '<button class="btn sm" type="button" data-adv="' + o.id + '">' + NEXT_LABEL[o.status] + '</button>' : '') +
+        '<a class="btn ghost sm" href="' + esc(U.waLink(o.phone, custMsg(o))) + '" target="_blank" rel="noopener">واتساب العميل</a>' +
+        (d && (o.status === 'prep' || o.status === 'out') ? '<a class="btn ghost sm" href="' + esc(U.waLink(d.phone, driverMsg(o))) + '" target="_blank" rel="noopener">أرسل لـ' + esc(d.name) + '</a>' : '') +
+        (canCancel ? (state.confirmCancel === o.id
+          ? '<button class="btn danger sm" type="button" data-cancel-yes="' + o.id + '">تأكيد الإلغاء</button><button class="btn ghost sm" type="button" data-cancel-no="1">تراجع</button>'
+          : '<button class="btn ghost sm" type="button" data-cancel="' + o.id + '">إلغاء</button>') : '') +
+      '</div></article>';
+  }
+
+  function replaceOrder(updated) {
+    state.orders = state.orders.map(function (o) { return o.id === updated.id ? updated : o; });
+    renderOrders();
+  }
+
+  $('#chips').addEventListener('click', function (e) {
+    var f = e.target.closest('[data-f]');
+    if (f) { state.filter = f.getAttribute('data-f'); state.confirmCancel = null; renderOrders(); }
+  });
+  $('#orders').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    if (b.hasAttribute('data-cancel')) { state.confirmCancel = Number(b.getAttribute('data-cancel')); renderOrders(); return; }
+    if (b.hasAttribute('data-cancel-no')) { state.confirmCancel = null; renderOrders(); return; }
+    var id = Number(b.getAttribute('data-adv') || b.getAttribute('data-cancel-yes'));
+    if (!id) return;
+    var o = state.orders.filter(function (x) { return x.id === id; })[0];
+    var status = b.hasAttribute('data-cancel-yes') ? 'cancelled' : NEXT[o.status];
+    U.busy(b, true);
+    authed('setStatus', { order_id: id, status: status }).then(function (res) {
+      state.confirmCancel = null;
+      replaceOrder(res.order);
+      U.toast('#' + id + ': ' + STATUS[status]);
+    }).catch(function (err) { U.busy(b, false); if (err.code !== 'auth') U.toast(err.message); });
+  });
+  $('#orders').addEventListener('change', function (e) {
+    var id = Number(e.target.getAttribute('data-drv'));
+    if (!id) return;
+    e.target.disabled = true;
+    authed('assignDriver', { order_id: id, driver_id: e.target.value }).then(function (res) {
+      replaceOrder(res.order);
+      U.toast(res.order.driver_id ? 'تم تعيين المندوب' : 'تم إلغاء تعيين المندوب');
+    }).catch(function (err) { e.target.disabled = false; if (err.code !== 'auth') U.toast(err.message); });
+  });
+
+  /* ---------------- Report ---------------- */
+  function riyadhDay(offsetDays) {
+    return new Date(Date.now() + 3 * 3600000 - offsetDays * 86400000).toISOString().slice(0, 10);
+  }
+  function loadReport() {
+    var to = riyadhDay(0), from;
+    if (state.range === 'month') from = to.slice(0, 8) + '01';
+    else from = riyadhDay(Number(state.range) - 1);
+    $('#reportBody').innerHTML = '<div class="sk" style="height:80px"></div><div class="sk" style="height:180px"></div>';
+    return authed('report', { from: from, to: to }).then(renderReport).catch(function (err) {
+      if (err.code !== 'auth') $('#reportBody').innerHTML = '<div class="card empty"><p>' + esc(err.message) + '</p></div>';
+    });
+  }
+  $('#ranges').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-range]');
+    if (!b) return;
+    state.range = b.getAttribute('data-range');
+    $$('#ranges .chip').forEach(function (c) { c.setAttribute('aria-pressed', String(c === b)); });
+    loadReport();
+  });
+
+  // Keep dates left-to-right inside Arabic text (LRI ... PDI).
+  function iso(d) { return '\u2066' + d + '\u2069'; }
+
+  function renderReport(r) {
+    var c = cur();
+    var maxQty = r.top_products.length ? r.top_products[0].qty : 1;
+    var maxDay = r.daily.reduce(function (m, d) { return Math.max(m, d.sales); }, 0) || 1;
+    var step = r.daily.length > 10 ? Math.ceil(r.daily.length / 7) : 1;
+    var text = [
+      'تقرير المبيعات · ' + bizName(), 'من ' + iso(r.from) + ' إلى ' + iso(r.to), '',
+      'الطلبات: ' + r.orders, 'المبيعات: ' + U.money(r.sales) + ' ' + c, 'متوسط الطلب: ' + U.money(r.average) + ' ' + c,
+    ];
+    if (r.top_products.length) {
+      text.push('', 'الأكثر طلباً:');
+      r.top_products.slice(0, 3).forEach(function (x, i) { text.push((i + 1) + '. ' + x.name + ' (' + x.qty + ')'); });
+    }
+    text.push('', 'عملاء متكررين: ' + r.repeat_customers.length, 'طلبات لم تُسلَّم: ' + r.undelivered);
+    state.lastReportText = text.join('\n');
+
+    $('#reportBody').innerHTML =
+      '<div class="tiles">' +
+        '<div class="tile"><span>الطلبات</span><strong>' + r.orders + '</strong></div>' +
+        '<div class="tile"><span>المبيعات</span><strong>' + U.money(r.sales) + '</strong></div>' +
+        '<div class="tile"><span>متوسط الطلب</span><strong>' + U.money(r.average) + '</strong></div>' +
+      '</div>' +
+      (r.undelivered ? '<div class="banner">طلبات لم تُسلَّم بعد: ' + r.undelivered + '</div>' : '') +
+      (r.daily.length ? '<div class="card"><h3>المبيعات اليومية (' + esc(c) + ')</h3><div class="vbars" role="img" aria-label="رسم المبيعات اليومية">' +
+        r.daily.map(function (d, i) {
+          var h = Math.round(d.sales / maxDay * 100);
+          return '<div class="vbar" title="' + d.date + ': ' + U.money(d.sales) + '"><i class="' + (d.sales ? '' : 'zero') + '" style="height:' + Math.max(h, 2) + '%"></i>' +
+            '<small>' + (i % step === 0 ? d.date.slice(8) + '/' + d.date.slice(5, 7) : '&nbsp;') + '</small></div>';
+        }).join('') + '</div></div>' : '') +
+      '<div class="card"><h3>الأكثر طلباً</h3>' + (r.top_products.length ? '<div class="hbars">' + r.top_products.map(function (x) {
+        return '<div><div class="hbar-top"><span>' + esc(x.name) + '</span><b>' + x.qty + ' · ' + U.money(x.revenue) + ' ' + esc(c) + '</b></div>' +
+          '<div class="track"><div class="fill" style="width:' + Math.round(x.qty / maxQty * 100) + '%"></div></div></div>';
+      }).join('') + '</div>' : '<p class="muted">ما فيه مبيعات في هذي الفترة.</p>') + '</div>' +
+      '<div class="card"><h3>العملاء المتكررين</h3>' + (r.repeat_customers.length
+        ? '<div class="list">' + r.repeat_customers.map(function (x) { return '<div class="item"><div class="item-body"><b>' + esc(x.name) + '</b></div><span class="muted num">' + x.orders + ' طلبات</span></div>'; }).join('') + '</div><p class="muted">يستاهلون رسالة شكر أو خصم بسيط.</p>'
+        : '<p class="muted">ما فيه عملاء متكررين في هذي الفترة.</p>') + '</div>' +
+      '<div class="card"><h3>نص التقرير</h3><pre class="report" id="reportText"></pre><button class="btn ghost sm" id="copyReport" type="button">انسخ التقرير</button></div>';
+    $('#reportText').textContent = state.lastReportText;
+  }
+  $('#reportBody').addEventListener('click', function (e) {
+    if (!e.target.closest('#copyReport')) return;
+    U.copy(state.lastReportText, function () { U.toast('انسخ التقرير'); }, function () { selectText($('#reportText')); U.toast('النص محدد، انسخه يدوي'); });
+  });
+  function selectText(el) {
+    var r = document.createRange(); r.selectNodeContents(el);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+
+  /* ---------------- Settings ---------------- */
+  function loadSettings() {
+    return authed('getSettings').then(applySettings);
+  }
+
+  function applySettings(cfg) {
+    state.cfg = cfg;
+    var s = cfg.settings;
+    $('#bizName').textContent = s.business_name;
+    $('#mark').textContent = s.mark_letter || (s.business_name || '').trim().charAt(0);
+    $('#accepting').checked = s.accepting_orders !== 'no';
+    $('#closedMsg').value = s.closed_message || '';
+    $('#sName').value = s.business_name || '';
+    $('#sTagline').value = s.tagline || '';
+    $('#sMark').value = s.mark_letter || '';
+    $('#sEmail').value = s.owner_email || '';
+    $('#sTelegram').value = s.telegram_chat_id || '';
+    $('#tgHint').textContent = cfg.telegram_ready ? 'البوت مجهز، حط رقم المحادثة.' : 'تنبيه تيليجرام يحتاج تجهيز من المطور أول.';
+    state.slots = String(s.delivery_slots || '').split(',').filter(Boolean);
+    updateAcceptingHint();
+    renderSlotTags();
+    renderProductsList();
+    renderDrivers();
+    if (state.orders.length) renderOrders();
+  }
+
+  function updateAcceptingHint() {
+    var on = $('#accepting').checked;
+    $('#acceptingHint').textContent = on ? 'العملاء يقدرون يطلبون الحين' : 'صفحة الطلب متوقفة';
+    $('#closedField').hidden = on;
+  }
+  $('#accepting').addEventListener('change', updateAcceptingHint);
+
+  function save(btn, settings, okMsg) {
+    U.busy(btn, true);
+    return authed('saveSettings', { settings: settings }).then(function (cfg) {
+      applySettings(cfg);
+      U.toast(okMsg || 'انحفظ');
+    }).catch(function (err) { if (err.code !== 'auth') U.toast(err.message); }).then(function () { U.busy(btn, false); });
+  }
+  $('#saveAccepting').addEventListener('click', function (e) {
+    save(e.currentTarget, { accepting_orders: $('#accepting').checked ? 'yes' : 'no', closed_message: $('#closedMsg').value });
+  });
+  $('#saveInfo').addEventListener('click', function (e) {
+    save(e.currentTarget, { business_name: $('#sName').value, tagline: $('#sTagline').value, mark_letter: $('#sMark').value });
+  });
+  $('#saveAlerts').addEventListener('click', function (e) {
+    save(e.currentTarget, { owner_email: $('#sEmail').value, telegram_chat_id: U.latinDigits($('#sTelegram').value) });
+  });
+
+  function renderSlotTags() {
+    $('#slotTags').innerHTML = state.slots.length ? state.slots.map(function (s, i) {
+      return '<span class="tag">' + esc(s) + '<button type="button" data-rm-slot="' + i + '" aria-label="حذف ' + esc(s) + '">×</button></span>';
+    }).join('') : '<p class="muted">ما فيه مواعيد. أضف موعد واحد على الأقل.</p>';
+  }
+  $('#slotTags').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-rm-slot]');
+    if (!b) return;
+    state.slots.splice(Number(b.getAttribute('data-rm-slot')), 1);
+    renderSlotTags();
+  });
+  function addSlot() {
+    var v = $('#newSlot').value.replace(/[,،]/g, ' ').trim();
+    if (!v) return;
+    if (state.slots.indexOf(v) < 0) state.slots.push(v);
+    $('#newSlot').value = '';
+    renderSlotTags();
+    $('#newSlot').focus();
+  }
+  $('#addSlot').addEventListener('click', addSlot);
+  $('#newSlot').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); addSlot(); } });
+  $('#saveSlots').addEventListener('click', function (e) { save(e.currentTarget, { delivery_slots: state.slots }, 'انحفظت المواعيد'); });
+
+  /* Products */
+  function productEditor(p) {
+    var isNew = !p;
+    p = p || { id: '', name: '', description: '', price: '', available: true };
+    return '<div class="editor" data-editor="product">' +
+      '<div class="field"><label for="pName">اسم الصنف</label><input type="text" id="pName" maxlength="60" value="' + esc(p.name) + '"></div>' +
+      '<div class="field"><label for="pDesc">الوصف (اختياري)</label><input type="text" id="pDesc" maxlength="120" value="' + esc(p.description) + '" placeholder="مثال: حجم عائلي · 8 قطع"></div>' +
+      '<div class="two"><div class="field"><label for="pPrice">السعر (' + esc(cur()) + ')</label><input type="number" id="pPrice" inputmode="decimal" min="0" step="0.5" value="' + esc(p.price) + '"></div>' +
+      '<label class="switch" for="pAvail"><b>متوفر</b><input type="checkbox" id="pAvail"' + (p.available ? ' checked' : '') + '></label></div>' +
+      '<div class="o-actions"><button class="btn sm" type="button" data-p-save="' + esc(p.id) + '">' + (isNew ? 'إضافة' : 'حفظ') + '</button>' +
+      '<button class="btn ghost sm" type="button" data-p-close="1">إلغاء</button>' +
+      (isNew ? '' : (state.confirmDelete === 'p:' + p.id
+        ? '<button class="btn danger sm" type="button" data-p-del-yes="' + esc(p.id) + '">تأكيد الحذف</button>'
+        : '<button class="btn ghost sm" type="button" data-p-del="' + esc(p.id) + '">حذف</button>')) +
+      '</div></div>';
+  }
+
+  function renderProductsList() {
+    var list = state.cfg.products;
+    var html = '';
+    if (state.editProduct === 'new') html += productEditor(null);
+    if (!list.length && state.editProduct !== 'new') html += '<p class="muted">ما فيه أصناف. أضف أول صنف عشان تبدأ صفحة الطلب تشتغل.</p>';
+    html += list.map(function (p, i) {
+      if (state.editProduct === p.id) return productEditor(p);
+      return '<div class="item' + (p.available ? '' : ' off') + '">' +
+        '<div class="item-body"><b>' + esc(p.name) + '</b><span class="muted num">' + U.money(p.price) + ' ' + esc(cur()) + (p.available ? '' : ' · غير متوفر') + '</span></div>' +
+        '<button class="icon-btn" type="button" data-p-move="' + esc(p.id) + '" data-dir="up" aria-label="لفوق"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+        '<button class="icon-btn" type="button" data-p-move="' + esc(p.id) + '" data-dir="down" aria-label="لتحت"' + (i === list.length - 1 ? ' disabled' : '') + '>↓</button>' +
+        '<button class="btn ghost sm" type="button" data-p-edit="' + esc(p.id) + '">تعديل</button></div>';
+    }).join('');
+    $('#productList').innerHTML = html;
+  }
+
+  $('#addProduct').addEventListener('click', function () {
+    state.editProduct = 'new'; state.confirmDelete = null;
+    renderProductsList();
+    $('#pName').focus();
+  });
+  $('#productList').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    if (b.hasAttribute('data-p-edit')) {
+      state.editProduct = b.getAttribute('data-p-edit'); state.confirmDelete = null;
+      renderProductsList(); $('#pName').focus(); return;
+    }
+    if (b.hasAttribute('data-p-close')) { state.editProduct = null; renderProductsList(); return; }
+    if (b.hasAttribute('data-p-del')) { state.confirmDelete = 'p:' + b.getAttribute('data-p-del'); renderProductsList(); return; }
+    var call = null, okMsg = '';
+    if (b.hasAttribute('data-p-move')) {
+      call = authed('moveProduct', { id: b.getAttribute('data-p-move'), direction: b.getAttribute('data-dir') });
+    } else if (b.hasAttribute('data-p-del-yes')) {
+      call = authed('deleteProduct', { id: b.getAttribute('data-p-del-yes') }); okMsg = 'انحذف الصنف';
+    } else if (b.hasAttribute('data-p-save')) {
+      var name = $('#pName').value.trim(), price = U.latinDigits($('#pPrice').value);
+      if (!name) { U.toast('اكتب اسم الصنف'); $('#pName').focus(); return; }
+      if (price === '' || !(Number(price) >= 0)) { U.toast('اكتب السعر'); $('#pPrice').focus(); return; }
+      call = authed('saveProduct', { product: { id: b.getAttribute('data-p-save'), name: name, description: $('#pDesc').value, price: Number(price), available: $('#pAvail').checked } });
+      okMsg = 'انحفظ الصنف';
+    }
+    if (!call) return;
+    U.busy(b, true);
+    call.then(function (cfg) {
+      state.editProduct = null; state.confirmDelete = null;
+      applySettings(cfg);
+      if (okMsg) U.toast(okMsg);
+    }).catch(function (err) { U.busy(b, false); if (err.code !== 'auth') U.toast(err.message); });
+  });
+
+  /* Drivers */
+  function driverEditor(d) {
+    var isNew = !d;
+    d = d || { id: '', name: '', phone: '' };
+    return '<div class="editor">' +
+      '<div class="two"><div class="field"><label for="dName">الاسم</label><input type="text" id="dName" maxlength="40" value="' + esc(d.name) + '"></div>' +
+      '<div class="field"><label for="dPhone">الجوال</label><input type="tel" id="dPhone" class="ltr" inputmode="tel" maxlength="14" placeholder="05XXXXXXXX" value="' + esc(d.phone) + '"></div></div>' +
+      '<div class="o-actions"><button class="btn sm" type="button" data-d-save="' + esc(d.id) + '">' + (isNew ? 'إضافة' : 'حفظ') + '</button>' +
+      '<button class="btn ghost sm" type="button" data-d-close="1">إلغاء</button>' +
+      (isNew ? '' : (state.confirmDelete === 'd:' + d.id
+        ? '<button class="btn danger sm" type="button" data-d-del-yes="' + esc(d.id) + '">تأكيد الحذف</button>'
+        : '<button class="btn ghost sm" type="button" data-d-del="' + esc(d.id) + '">حذف</button>')) +
+      '</div></div>';
+  }
+  function renderDrivers() {
+    var list = state.cfg.drivers;
+    var html = state.editDriver === 'new' ? driverEditor(null) : '';
+    if (!list.length && state.editDriver !== 'new') html += '<p class="muted">أضف المناديب عشان ترسل لهم تفاصيل الطلب بضغطة.</p>';
+    html += list.map(function (d) {
+      if (state.editDriver === d.id) return driverEditor(d);
+      return '<div class="item"><div class="item-body"><b>' + esc(d.name) + '</b><bdi dir="ltr" class="muted num">' + esc(d.phone || 'بدون جوال') + '</bdi></div>' +
+        '<button class="btn ghost sm" type="button" data-d-edit="' + esc(d.id) + '">تعديل</button></div>';
+    }).join('');
+    $('#driverList').innerHTML = html;
+  }
+  $('#addDriver').addEventListener('click', function () {
+    state.editDriver = 'new'; state.confirmDelete = null;
+    renderDrivers(); $('#dName').focus();
+  });
+  $('#driverList').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    if (b.hasAttribute('data-d-edit')) { state.editDriver = b.getAttribute('data-d-edit'); state.confirmDelete = null; renderDrivers(); $('#dName').focus(); return; }
+    if (b.hasAttribute('data-d-close')) { state.editDriver = null; renderDrivers(); return; }
+    if (b.hasAttribute('data-d-del')) { state.confirmDelete = 'd:' + b.getAttribute('data-d-del'); renderDrivers(); return; }
+    var call = null;
+    if (b.hasAttribute('data-d-del-yes')) call = authed('deleteDriver', { id: b.getAttribute('data-d-del-yes') });
+    else if (b.hasAttribute('data-d-save')) {
+      var name = $('#dName').value.trim(), phoneRaw = $('#dPhone').value.trim();
+      if (!name) { U.toast('اكتب اسم المندوب'); $('#dName').focus(); return; }
+      if (phoneRaw && !U.normPhone(phoneRaw)) { U.toast('الجوال لازم يبدأ بـ 05 ويكون 10 أرقام'); $('#dPhone').focus(); return; }
+      call = authed('saveDriver', { driver: { id: b.getAttribute('data-d-save'), name: name, phone: U.normPhone(phoneRaw) } });
+    }
+    if (!call) return;
+    U.busy(b, true);
+    call.then(function (cfg) {
+      state.editDriver = null; state.confirmDelete = null;
+      applySettings(cfg);
+      U.toast('انحفظ');
+    }).catch(function (err) { U.busy(b, false); if (err.code !== 'auth') U.toast(err.message); });
+  });
+
+  /* PIN */
+  $('#pinForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var oldPin = U.latinDigits($('#oldPin').value), p1 = U.latinDigits($('#newPin').value), p2 = U.latinDigits($('#newPin2').value);
+    var err = !oldPin ? 'اكتب الرقم الحالي' : !/^\d{6,8}$/.test(p1) ? 'الرقم الجديد من 6 إلى 8 أرقام' : p1 !== p2 ? 'الرقمين الجديدين مو متطابقين' : '';
+    $('#pinErr').textContent = err;
+    if (err) return;
+    var btn = $('#savePin');
+    U.busy(btn, true);
+    authed('changePin', { old_pin: oldPin, new_pin: p1, device: U.store.get('dev') || '' }).then(function (res) {
+      state.token = res.token;
+      U.store.set('tok', res.token, sessionStorage);
+      $('#pinForm').reset();
+      U.toast('تغير الرقم السري');
+    }).catch(function (e2) { if (e2.code !== 'auth') $('#pinErr').textContent = e2.message; }).then(function () { U.busy(btn, false); });
+  });
+
+  /* Customer link */
+  (function () {
+    var link = location.href.replace(/[#?].*$/, '').replace(/admin\.html$/, '');
+    $('#custLink').value = link;
+    $('#copyLink').addEventListener('click', function () {
+      U.copy(link, function () { U.toast('انسخ الرابط'); }, function () { $('#custLink').select(); U.toast('الرابط محدد، انسخه يدوي'); });
+    });
+  })();
+
+  $('#logout').addEventListener('click', function () {
+    var t = state.token;
+    showLogin('');
+    API.post('logout', { token: t }).catch(function () { /* session will expire anyway */ });
+  });
+
+  /* Polling for new orders while the dashboard is open */
+  setInterval(function () {
+    if (state.token && !$('#app').hidden && document.visibilityState === 'visible' && state.tab === 'orders') {
+      loadOrders(true).catch(function () { /* next poll retries */ });
+    }
+  }, POLL_MS);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible' && state.token && !$('#app').hidden && state.tab === 'orders') {
+      loadOrders(true).catch(function () {});
+    }
+  });
+
+  if (state.token) start(); else showLogin('');
+})();
+</script>
+</body>
+</html>

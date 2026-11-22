@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>اطلب الآن</title>
+<meta name="theme-color" content="#B3315C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="app.css">
+<style>
+  body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .shop { display: flex; align-items: center; gap: 14px; padding-top: 8px; }
+  .shop h1 { font-size: 22px; }
+  .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .products { display: flex; flex-direction: column; gap: 10px; }
+  .prod {
+    display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 16px; padding: 12px 12px 12px 10px; transition: border-color .15s, background .15s;
+  }
+  .prod.on { border-color: var(--accent); background: var(--accent-soft); }
+  .prod-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .prod-name { font-weight: 600; font-size: 16px; }
+  .prod-desc { font-size: 14px; color: var(--muted); }
+  .prod-price { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .slots { display: flex; flex-wrap: wrap; gap: 8px; }
+  .slot { position: relative; }
+  .slot input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .slot span {
+    display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 44px; padding: 6px 16px; border-radius: 999px; line-height: 1.25;
+    border: 1px solid var(--line); background: var(--surface); font-weight: 500; font-size: 15px;
+  }
+  .slot small { font-size: 12px; font-weight: 400; opacity: .75; font-variant-numeric: tabular-nums; }
+  .slot input:checked + span { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .slot input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .bar {
+    position: fixed; inset-inline: 0; bottom: 0; z-index: 30; background: var(--surface); border-top: 1px solid var(--line);
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, .06);
+    padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  }
+  .bar-in { max-width: 640px; margin-inline: auto; display: flex; align-items: center; gap: 12px; }
+  .bar-sum { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+  .bar-sum strong { font-family: var(--font-display); font-size: 20px; font-variant-numeric: tabular-nums; }
+  .bar .btn { min-width: 150px; }
+  .done { align-items: center; text-align: center; padding-block: 28px; }
+  .done-icon {
+    width: 64px; height: 64px; border-radius: 50%; background: var(--done-bg); color: var(--done);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .order-no { font-family: var(--font-display); font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .summary { width: 100%; text-align: start; border-top: 1px dashed var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .summary div { display: flex; justify-content: space-between; gap: 8px; }
+  .summary .tot { font-weight: 700; border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="shop" id="shop" hidden>
+    <div class="mark" id="mark" aria-hidden="true"></div>
+    <div>
+      <h1 id="bizName"></h1>
+      <p class="muted" id="tagline"></p>
+    </div>
+  </header>
+
+  <div id="loading" class="stack" aria-label="جاري التحميل">
+    <div class="row"><div class="sk" style="width:48px;height:48px"></div><div class="sk" style="flex:1;height:28px"></div></div>
+    <div class="sk" style="height:76px"></div>
+    <div class="sk" style="height:76px"></div>
+    <div class="sk" style="height:76px"></div>
+  </div>
+
+  <div id="loadError" class="card" hidden>
+    <h2>ما قدرنا نفتح قائمة الطلب</h2>
+    <p class="muted" id="loadErrorText"></p>
+    <button class="btn" id="retryLoad" type="button">حاول مرة ثانية</button>
+  </div>
+
+  <div class="notice" id="closed" hidden></div>
+
+  <form id="orderForm" class="stack" novalidate hidden>
+    <section class="stack" aria-labelledby="menuTitle">
+      <div class="section-title"><h2 id="menuTitle">اختر طلبك</h2><span class="muted" id="menuCount"></span></div>
+      <div class="products" id="products"></div>
+    </section>
+
+    <section class="card" aria-labelledby="infoTitle">
+      <h2 id="infoTitle">بيانات التوصيل</h2>
+      <div class="field">
+        <label for="name">الاسم</label>
+        <input type="text" id="name" autocomplete="name" maxlength="60">
+        <p class="err" id="nameErr"></p>
+      </div>
+      <div class="field">
+        <label for="phone">رقم الجوال</label>
+        <input type="tel" id="phone" class="ltr" inputmode="tel" autocomplete="tel" placeholder="05XXXXXXXX" maxlength="14">
+        <p class="err" id="phoneErr"></p>
+      </div>
+      <fieldset class="field" id="slotsField">
+        <legend>موعد التسليم</legend>
+        <div class="slots" id="slots"></div>
+        <p class="err" id="slotErr"></p>
+      </fieldset>
+      <div class="field">
+        <label for="district">الحي</label>
+        <input type="text" id="district" maxlength="60" placeholder="مثال: النرجس">
+        <p class="err" id="districtErr"></p>
+      </div>
+      <div class="field">
+        <label for="loc">رابط موقعك (اختياري)</label>
+        <input type="url" id="loc" class="ltr" inputmode="url" placeholder="https://maps.app.goo.gl/..." maxlength="300">
+        <p class="hint">من خرائط قوقل: اضغط على موقعك، بعدها "مشاركة" وانسخ الرابط.</p>
+        <p class="err" id="locErr"></p>
+      </div>
+      <div class="field">
+        <label for="notes">ملاحظات (اختياري)</label>
+        <textarea id="notes" maxlength="300" placeholder="مثال: بدون مكسرات، أو تغليف هدية"></textarea>
+      </div>
+      <div class="hp" aria-hidden="true"><label for="website">اتركه فاضي</label><input type="text" id="website" tabindex="-1" autocomplete="off"></div>
+    </section>
+    <div class="alert" id="submitErr" role="alert" hidden></div>
+  </form>
+
+  <section class="card done" id="done" hidden aria-live="polite">
+    <div class="done-icon" aria-hidden="true">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+    </div>
+    <h2>وصل طلبك، شكراً لك</h2>
+    <div>
+      <p class="muted">رقم الطلب</p>
+      <p class="order-no" id="orderNo"></p>
+    </div>
+    <div class="summary" id="summary"></div>
+    <p class="muted">بنتواصل معك على الجوال لتأكيد التسليم.</p>
+    <button class="btn ghost" id="newOrder" type="button">طلب جديد</button>
+  </section>
+</main>
+
+<div class="bar" id="bar" hidden>
+  <div class="bar-in">
+    <div class="bar-sum"><span class="muted" id="barCount">ما اخترت شي بعد</span><strong id="barTotal">0</strong></div>
+    <button class="btn" id="submitBtn" type="submit" form="orderForm" disabled>أرسل الطلب</button>
+  </div>
+</div>
+
+<div class="toast lifted" id="toast" role="status" aria-live="polite" hidden><span></span></div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = U.esc;
+  var catalog = null;
+  var cart = {};          // product_id -> qty
+  var MAX_QTY = 20;
+
+  function cur() { return (catalog && catalog.currency) || 'ر.س'; }
+
+  function load() {
+    $('#loading').hidden = false;
+    $('#loadError').hidden = true;
+    API.get('catalog').then(function (data) {
+      catalog = data;
+      render();
+    }).catch(function (err) {
+      $('#loading').hidden = true;
+      $('#loadError').hidden = false;
+      $('#loadErrorText').textContent = err.message;
+    });
+  }
+
+  function render() {
+    $('#loading').hidden = true;
+    $('#shop').hidden = false;
+    $('#bizName').textContent = catalog.business_name;
+    $('#tagline').textContent = catalog.tagline || '';
+    $('#tagline').hidden = !catalog.tagline;
+    $('#mark').textContent = catalog.mark_letter || '';
+    document.title = catalog.business_name + ' · اطلب الآن';
+
+    if (!catalog.accepting) {
+      $('#closed').hidden = false;
+      $('#closed').textContent = catalog.closed_message || 'الطلبات متوقفة حالياً.';
+      $('#orderForm').hidden = true;
+      $('#bar').hidden = true;
+      return;
+    }
+    $('#closed').hidden = true;
+    $('#orderForm').hidden = false;
+    $('#bar').hidden = false;
+
+    // Drop cart lines for products that disappeared since the last load.
+    var ids = {};
+    catalog.products.forEach(function (p) { ids[p.id] = true; });
+    Object.keys(cart).forEach(function (id) { if (!ids[id]) delete cart[id]; });
+
+    renderProducts();
+    renderSlots();
+    restoreCustomer();
+    updateBar();
+  }
+
+  function renderProducts() {
+    var list = catalog.products;
+    $('#menuCount').textContent = list.length ? list.length + ' أصناف' : '';
+    if (!list.length) {
+      $('#products').innerHTML = '<div class="card"><p class="muted">ما فيه أصناف متوفرة الحين، ارجع لنا بعد شوي.</p></div>';
+      return;
+    }
+    $('#products').innerHTML = list.map(function (p) {
+      var q = cart[p.id] || 0;
+      return '<div class="prod' + (q ? ' on' : '') + '" data-id="' + esc(p.id) + '">' +
+        '<div class="prod-body"><span class="prod-name">' + esc(p.name) + '</span>' +
+        (p.description ? '<span class="prod-desc">' + esc(p.description) + '</span>' : '') +
+        '<span class="prod-price">' + U.money(p.price) + ' ' + esc(cur()) + '</span></div>' +
+        '<div class="stepper" role="group" aria-label="كمية ' + esc(p.name) + '">' +
+          (q ? '<button type="button" data-d="-1" aria-label="أنقص">−</button><output>' + q + '</output>' : '') +
+          '<button type="button" data-d="1" class="' + (q ? '' : 'add') + '" aria-label="أضف ' + esc(p.name) + '">+</button>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  function renderSlots() {
+    var slots = catalog.delivery_slots || [];
+    $('#slotsField').hidden = !slots.length;
+    var prev = (document.querySelector('input[name=slot]:checked') || {}).value;
+    var dates = catalog.slot_dates || [];
+    $('#slots').innerHTML = slots.map(function (s, i) {
+      var hint = slotHint(s, dates[i]);
+      return '<label class="slot"><input type="radio" name="slot" value="' + esc(s) + '"' +
+        ((prev ? prev === s : i === 0) ? ' checked' : '') + '><span>' + esc(s) +
+        (hint ? '<small>' + esc(hint) + '</small>' : '') + '</span></label>';
+    }).join('');
+  }
+
+  // "بكرة" + 2026-11-23 -> "الاثنين 23/11"; a weekday label only gets the date.
+  var DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  function slotHint(label, ymd) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd || '')) return '';
+    var day = DAYS[new Date(ymd + 'T12:00:00+03:00').getUTCDay()];
+    var fold = function (x) { return String(x).replace(/[أإآ]/g, 'ا'); };
+    var dm = '\u2066' + Number(ymd.slice(8, 10)) + '/' + Number(ymd.slice(5, 7)) + '\u2069';
+    return fold(label).indexOf(fold(day)) >= 0 ? dm : day + ' ' + dm;
+  }
+
+  function cartLines() {
+    return catalog.products.filter(function (p) { return cart[p.id] > 0; })
+      .map(function (p) { return { p: p, qty: cart[p.id] }; });
+  }
+
+  function updateBar() {
+    var lines = cartLines();
+    var count = lines.reduce(function (s, l) { return s + l.qty; }, 0);
+    var total = lines.reduce(function (s, l) { return s + l.qty * l.p.price; }, 0);
+    $('#barCount').textContent = count ? count + (count === 1 ? ' صنف' : ' أصناف') : 'ما اخترت شي بعد';
+    $('#barTotal').textContent = U.money(total) + ' ' + cur();
+    $('#submitBtn').disabled = !count;
+  }
+
+  $('#products').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-d]');
+    if (!btn) return;
+    var id = btn.closest('.prod').getAttribute('data-id');
+    var q = (cart[id] || 0) + Number(btn.getAttribute('data-d'));
+    q = Math.max(0, Math.min(MAX_QTY, q));
+    if (q) cart[id] = q; else delete cart[id];
+    renderProducts();
+    var again = document.querySelector('.prod[data-id="' + CSS.escape(id) + '"] button[data-d="' + (q ? btn.getAttribute('data-d') : '1') + '"]');
+    if (again) again.focus();
+    updateBar();
+  });
+
+  function restoreCustomer() {
+    var saved = U.store.get('customer') || {};
+    ['name', 'phone', 'district', 'loc'].forEach(function (k) {
+      var el = $('#' + k);
+      if (saved[k] && !el.value) el.value = saved[k];
+    });
+  }
+
+  function setErr(id, msg) { $('#' + id).textContent = msg || ''; }
+
+  // Clear a field's error as soon as the customer edits it.
+  $('#orderForm').addEventListener('input', function (e) {
+    var map = { name: 'nameErr', phone: 'phoneErr', district: 'districtErr', loc: 'locErr' };
+    if (map[e.target.id]) setErr(map[e.target.id], '');
+    if (e.target.name === 'slot') setErr('slotErr', '');
+  });
+
+  $('#orderForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    $('#submitErr').hidden = true;
+    var name = $('#name').value.trim();
+    var phone = U.normPhone($('#phone').value);
+    var district = $('#district').value.trim();
+    var locRaw = $('#loc').value.trim();
+    var slotEl = document.querySelector('input[name=slot]:checked');
+    var needSlot = (catalog.delivery_slots || []).length > 0;
+
+    setErr('nameErr', name ? '' : 'اكتب اسمك');
+    setErr('phoneErr', phone ? '' : 'الجوال لازم يبدأ بـ 05 ويكون 10 أرقام');
+    setErr('districtErr', district ? '' : 'اكتب الحي عشان يوصلك الطلب');
+    setErr('locErr', !locRaw || U.safeUrl(locRaw) ? '' : 'الصق رابط يبدأ بـ https://');
+    setErr('slotErr', !needSlot || slotEl ? '' : 'اختر موعد التسليم');
+    var firstBad = !name ? '#name' : !phone ? '#phone' : (needSlot && !slotEl) ? '#slots' : !district ? '#district' : (locRaw && !U.safeUrl(locRaw)) ? '#loc' : null;
+    if (firstBad) {
+      var el = $(firstBad);
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (el.focus) el.focus({ preventScroll: true });
+      return;
+    }
+    var lines = cartLines();
+    if (!lines.length) return;
+
+    var btn = $('#submitBtn');
+    U.busy(btn, true);
+    API.post('placeOrder', {
+      name: name,
+      phone: phone,
+      district: district,
+      location_url: U.safeUrl(locRaw),
+      delivery_day: slotEl ? slotEl.value : '',
+      notes: $('#notes').value.trim(),
+      website: $('#website').value,
+      items: lines.map(function (l) { return { product_id: l.p.id, qty: l.qty }; }),
+    }).then(function (res) {
+      U.store.set('customer', { name: name, phone: phone, district: district, loc: U.safeUrl(locRaw) });
+      showDone(res, lines, res.delivery_text || (slotEl ? slotEl.value : ''));
+    }).catch(function (err) {
+      $('#submitErr').hidden = false;
+      $('#submitErr').textContent = err.message;
+      $('#submitErr').scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (err.code === 'stale_catalog' || err.code === 'closed') load();
+    }).then(function () { U.busy(btn, false); updateBar(); });
+  });
+
+  function showDone(res, lines, slot) {
+    $('#orderForm').hidden = true;
+    $('#bar').hidden = true;
+    $('#done').hidden = false;
+    $('#orderNo').textContent = '#' + res.order_id;
+    $('#summary').innerHTML = lines.map(function (l) {
+      return '<div><span>' + esc(l.p.name) + ' × ' + l.qty + '</span><span class="num">' + U.money(l.p.price * l.qty) + ' ' + esc(cur()) + '</span></div>';
+    }).join('') +
+      (slot ? '<div><span class="muted">التسليم</span><span>' + esc(slot) + '</span></div>' : '') +
+      '<div class="tot"><span>المجموع</span><span class="num">' + U.money(res.total) + ' ' + esc(cur()) + '</span></div>';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  $('#newOrder').addEventListener('click', function () {
+    cart = {};
+    $('#notes').value = '';
+    $('#done').hidden = true;
+    load();
+  });
+  $('#retryLoad').addEventListener('click', load);
+
+  load();
+})();
+</script>
+</body>
+</html>
